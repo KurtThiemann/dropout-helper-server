@@ -1,0 +1,7 @@
+{
+  "redisOptions": {},
+  "port": 3000,
+  "keyFile": null,
+  "certFile": null,
+  "socket": null
+}

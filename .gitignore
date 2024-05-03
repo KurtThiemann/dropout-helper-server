@@ -1,0 +1,5 @@
+.idea/
+node_modules/
+config.json
+pm2.json
+

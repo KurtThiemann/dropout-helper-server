@@ -1,0 +1,16 @@
+{
+  "name": "dropout-helper-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Server for the DropoutHelper Chrome/Firefox addon",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kurt Thiemann <kurt@thiemann.io>",
+  "license": "MIT",
+  "dependencies": {
+    "redis": "^4.6.13",
+    "ws": "^8.17.0"
+  }
+}
