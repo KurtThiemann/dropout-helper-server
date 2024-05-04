@@ -80,6 +80,21 @@ export default class Server extends EventEmitter {
 
         console.log('Server listening on', socket ?? port);
         this.emit('listening', socket ?? port);
+
+        setInterval(this.updateAllStats.bind(this), 10000);
+    }
+
+    /**
+     * @returns {Promise<void>}
+     */
+    async updateAllStats() {
+        try {
+            for (let subscription of this.subscriptions.values()) {
+                await this.publishSubscriptionStats(subscription);
+            }
+        } catch (e) {
+            console.error('Failed to update stats for all subscriptions:', e);
+        }
     }
 
     /**
