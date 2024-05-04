@@ -11,6 +11,7 @@ import UnsubscribeMessageHandler from "./MessageHandler/UnsubscribeMessageHandle
 import UpdateMessageHandler from "./MessageHandler/UpdateMessageHandler.js";
 import Message from "./Message.js";
 import InfoMessageHandler from "./MessageHandler/InfoMessageHandler.js";
+import {Mutex} from "async-mutex";
 
 export default class Server extends EventEmitter {
     /** @type {import("../Config.js").default} */ config;
@@ -18,6 +19,7 @@ export default class Server extends EventEmitter {
     /** @type {WatchPartyManager} */ watchPartyManager;
     /** @type {import("ws").WebSocketServer} */ wsServer;
     /** @type {Map<string, Subscription>} */ subscriptions = new Map();
+    /** @type {Mutex} */ subscriptionMutex = new Mutex();
     /** @type {MessageHandler[]} */ messageHandlers = [
         new CreateMessageHandler(this),
         new PingMessageHandler(this),
@@ -113,18 +115,27 @@ export default class Server extends EventEmitter {
     async subscribe(ws, id) {
         let subscription = this.subscriptions.get(id);
         if (!subscription) {
-            let party = await this.watchPartyManager.getParty(id);
-            if (!party) {
+            let result = await this.subscriptionMutex.runExclusive(async () => {
+                let party = await this.watchPartyManager.getParty(id);
+                if (!party) {
+                    return false;
+                }
+                party.on('update', this.handlePartyUpdate.bind(this));
+                await party.subscribe();
+                subscription = new Subscription(party);
+                subscription.sockets.add(ws);
+
+                this.subscriptions.set(id, subscription);
+                return true;
+            });
+            if (!result) {
                 return false;
             }
-            party.on('update', this.handlePartyUpdate.bind(this));
-            await party.subscribe();
-            subscription = new Subscription(party);
-            this.subscriptions.set(id, subscription);
+        } else {
+            subscription.sockets.add(ws);
         }
         this.emit('subscribed', id, ws);
         console.log(`Client subscribed to ${id}`);
-        subscription.sockets.add(ws);
         return true;
     }
 
@@ -140,9 +151,11 @@ export default class Server extends EventEmitter {
         }
         subscription.sockets.delete(ws);
         if (subscription.sockets.size === 0) {
-            console.log(`No more clients subscribed to ${id} on this instance, closing subscription...`);
-            this.subscriptions.delete(id);
-            await subscription.watchParty.unsubscribe();
+            await this.subscriptionMutex.runExclusive(async () => {
+                console.log(`No more clients subscribed to ${id} on this instance, closing subscription...`);
+                this.subscriptions.delete(id);
+                await subscription.watchParty.unsubscribe();
+            });
         }
         this.emit('unsubscribed', id, ws);
         console.log(`Client unsubscribed from ${id}`);
