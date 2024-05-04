@@ -12,8 +12,11 @@ import UpdateMessageHandler from "./MessageHandler/UpdateMessageHandler.js";
 import Message from "./Message.js";
 import InfoMessageHandler from "./MessageHandler/InfoMessageHandler.js";
 import {Mutex} from "async-mutex";
+import WatchPartyEvent from "../WatchParty/WatchPartyEvent.js";
+import crypto from "node:crypto";
 
 export default class Server extends EventEmitter {
+    /** @type {string} */ instanceId = crypto.randomBytes(8).toString('hex');
     /** @type {import("../Config.js").default} */ config;
     /** @type {http.Server} */ webServer;
     /** @type {WatchPartyManager} */ watchPartyManager;
@@ -91,20 +94,28 @@ export default class Server extends EventEmitter {
 
     /**
      * @param {WatchParty} party
-     * @param {Object} status
      * @returns {Promise<void>}
      */
-    async handlePartyUpdate(party, status) {
+    async handlePartyUpdate(party) {
         let subscription = this.subscriptions.get(party.id);
         if (!subscription) {
             return;
         }
-        let statusMessage = JSON.stringify(new Message('status', status));
+        let statusMessage = JSON.stringify(new Message('status', party.serializeStatus()));
         for (let ws of subscription.sockets) {
             if (ws.readyState === ws.OPEN) {
                 ws.send(statusMessage);
             }
         }
+    }
+
+    /**
+     * @param {Subscription} subscription
+     * @returns {Promise<this>}
+     */
+    async publishSubscriptionStats(subscription) {
+        await this.watchPartyManager.publishEvent(subscription.watchParty.id, new WatchPartyEvent('stats', subscription.collectStats()));
+        return this;
     }
 
     /**
@@ -122,7 +133,7 @@ export default class Server extends EventEmitter {
                 }
                 party.on('update', this.handlePartyUpdate.bind(this));
                 await party.subscribe();
-                subscription = new Subscription(party);
+                subscription = new Subscription(this.instanceId, party);
                 subscription.sockets.add(ws);
 
                 this.subscriptions.set(id, subscription);
@@ -136,6 +147,7 @@ export default class Server extends EventEmitter {
         }
         this.emit('subscribed', id, ws);
         console.log(`Client subscribed to ${id}`);
+        await this.publishSubscriptionStats(subscription);
         return true;
     }
 
@@ -157,6 +169,7 @@ export default class Server extends EventEmitter {
         }
         this.emit('unsubscribed', id, ws);
         console.log(`Client unsubscribed from ${id}`);
+        await this.publishSubscriptionStats(subscription);
         return true;
     }
 

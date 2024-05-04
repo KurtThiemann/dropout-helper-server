@@ -1,6 +1,7 @@
 import {createClient} from 'redis';
 import {EventEmitter} from "events";
 import WatchParty from "./WatchParty.js";
+import WatchPartyEvent from "./WatchPartyEvent.js";
 
 export default class WatchPartyManager extends EventEmitter {
     static prefix = 'dropout_party_';
@@ -47,13 +48,23 @@ export default class WatchPartyManager extends EventEmitter {
      * @returns {Promise<this>}
      */
     async saveParty(party) {
-        let status = JSON.stringify(party.serialize());
+        let status = party.serialize();
         await this.redis.set(
             WatchPartyManager.prefix + party.id,
-            status,
+            JSON.stringify(status),
             {EX: 60 * 60 * 24}
         );
-        await this.publisher.publish(WatchPartyManager.prefix + party.id, status);
+        await this.publishEvent(party.id, new WatchPartyEvent('status', status));
+        return this;
+    }
+
+    /**
+     * @param {string} id
+     * @param {WatchPartyEvent} event
+     * @returns {Promise<this>}
+     */
+    async publishEvent(id, event) {
+        await this.publisher.publish(WatchPartyManager.prefix + id, JSON.stringify(event));
         return this;
     }
 

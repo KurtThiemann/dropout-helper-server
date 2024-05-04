@@ -1,5 +1,8 @@
 import {EventEmitter} from "events";
 import crypto from "node:crypto";
+import WatchPartyEvent from "./WatchPartyEvent.js";
+import Stats from "./Stats/Stats.js";
+import StatsCollector from "./Stats/StatsCollector.js";
 
 export default class WatchParty extends EventEmitter {
     /** @type {string} */ secret;
@@ -10,6 +13,7 @@ export default class WatchParty extends EventEmitter {
     /** @type {number} */ speed = 1;
     /** @type {boolean} */ playing = true;
 
+    /** @type {StatsCollector} */ stats;
     /** @type {WatchPartyManager} */ manager;
     /** @type {?Function} */ _handleUpdate = null;
 
@@ -19,6 +23,7 @@ export default class WatchParty extends EventEmitter {
     constructor(manager) {
         super();
         this.manager = manager;
+        this.stats = new StatsCollector();
     }
 
     /**
@@ -93,6 +98,7 @@ export default class WatchParty extends EventEmitter {
             time: this.time,
             speed: this.speed,
             playing: this.playing,
+            stats: this.stats.getTotal(),
             secret: this.secret
         };
     }
@@ -106,7 +112,8 @@ export default class WatchParty extends EventEmitter {
             url: this.url,
             time: this.getTime(),
             speed: this.speed,
-            playing: this.playing
+            playing: this.playing,
+            stats: this.stats.getTotal(),
         }
     }
 
@@ -134,8 +141,17 @@ export default class WatchParty extends EventEmitter {
      * @param {string} message
      */
     handleUpdate(message) {
-        Object.assign(this, JSON.parse(message));
-        this.lastUpdate = Date.now();
-        this.emit('update', this, this.serializeStatus());
+        let event = WatchPartyEvent.fromJSON(message);
+        if (event.getType() === 'stats') {
+            this.stats.update(Object.assign(new Stats(), event.getData()));
+            this.emit('stats', this, this.stats.getTotal());
+            return;
+        }
+
+        if (event.getType() === 'status') {
+            Object.assign(this, event.getData());
+            this.lastUpdate = Date.now();
+            this.emit('update', this, this.serializeStatus());
+        }
     }
 }
