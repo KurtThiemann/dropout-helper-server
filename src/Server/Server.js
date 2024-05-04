@@ -140,6 +140,7 @@ export default class Server extends EventEmitter {
         }
         subscription.sockets.delete(ws);
         if (subscription.sockets.size === 0) {
+            console.log(`No more clients subscribed to ${id} on this instance, closing subscription...`);
             this.subscriptions.delete(id);
             await subscription.watchParty.unsubscribe();
         }

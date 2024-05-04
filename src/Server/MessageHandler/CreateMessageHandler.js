@@ -13,6 +13,7 @@ export default class CreateMessageHandler extends MessageHandler {
         }
         await this.server.watchPartyManager.saveParty(party);
 
+        console.log(`Created party ${party.id}`);
         return message.respond(party.serialize());
     }
 
