@@ -19,12 +19,6 @@ export default class StatsCollector {
      * @returns {Stats}
      */
     updateTotal() {
-        let time = Date.now() - 60 * 1000;
-        for (let [instance, stats] of this.stats) {
-            if (stats.createTime < time) {
-                this.stats.delete(instance);
-            }
-        }
         this.total = Stats.combine(this.stats.values());
         return this.total;
     }
