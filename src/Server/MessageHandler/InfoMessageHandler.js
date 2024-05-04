@@ -7,7 +7,7 @@ export default class InfoMessageHandler extends MessageHandler {
      */
     async handleMessage(ws, message) {
         let data = message.getData();
-        if (typeof data.id !== 'string' && data.id.length !== 16) {
+        if (typeof data.id !== 'string' || data.id.length !== 16) {
             return message.respondError('Invalid party ID');
         }
 

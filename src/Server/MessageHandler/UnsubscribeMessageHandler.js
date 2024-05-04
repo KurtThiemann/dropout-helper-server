@@ -6,7 +6,7 @@ export default class UnsubscribeMessageHandler extends MessageHandler {
      */
     async handleMessage(ws, message) {
         let data = message.getData();
-        if (typeof data.id !== 'string' && data.id.length !== 16) {
+        if (typeof data.id !== 'string' || data.id.length !== 16) {
             return message.respondError('Invalid party ID');
         }
         if (!await this.server.unsubscribe(ws, data.id)) {
