@@ -1,7 +1,9 @@
+import out from "./src/out.js";
 import Config from "./src/Config.js";
 import WatchPartyManager from "./src/WatchParty/WatchPartyManager.js";
 import Server from "./src/Server/Server.js";
 
+out();
 
 let config = await Config.get();
 
@@ -12,5 +14,4 @@ await watchPartyManager.init();
 
 console.log('Starting server...');
 let server = new Server(config, watchPartyManager);
-server.on('listening', (listen) => console.log(`Server listening on ${listen}`));
 await server.init();

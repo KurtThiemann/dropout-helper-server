@@ -73,6 +73,7 @@ export default class Server extends EventEmitter {
             await fs.promises.chmod(socket, 0o777);
         }
 
+        console.log('Server listening on', socket ?? port);
         this.emit('listening', socket ?? port);
     }
 
@@ -122,6 +123,7 @@ export default class Server extends EventEmitter {
             this.subscriptions.set(id, subscription);
         }
         this.emit('subscribed', id, ws);
+        console.log(`Client subscribed to ${id}`);
         subscription.sockets.add(ws);
         return true;
     }
@@ -142,6 +144,7 @@ export default class Server extends EventEmitter {
             await subscription.watchParty.unsubscribe();
         }
         this.emit('unsubscribed', id, ws);
+        console.log(`Client unsubscribed from ${id}`);
         return true;
     }
 
@@ -155,6 +158,7 @@ export default class Server extends EventEmitter {
         ws.on('close', async () => {
             for (let [id, subscription] of this.subscriptions) {
                 if (subscription.sockets.has(ws)) {
+                    console.log('Client disconnected');
                     await this.unsubscribe(ws, id);
                 }
             }
