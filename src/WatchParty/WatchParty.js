@@ -13,7 +13,7 @@ export default class WatchParty extends EventEmitter {
     /** @type {number} */ speed = 1;
     /** @type {boolean} */ playing = true;
 
-    /** @type {StatsCollector} */ stats;
+    /** @type {StatsCollector} */ statsCollector;
     /** @type {WatchPartyManager} */ manager;
     /** @type {?Function} */ _handleUpdate = null;
 
@@ -23,7 +23,7 @@ export default class WatchParty extends EventEmitter {
     constructor(manager) {
         super();
         this.manager = manager;
-        this.stats = new StatsCollector();
+        this.statsCollector = new StatsCollector();
     }
 
     /**
@@ -98,7 +98,7 @@ export default class WatchParty extends EventEmitter {
             time: this.time,
             speed: this.speed,
             playing: this.playing,
-            stats: this.stats.getTotal(),
+            stats: this.statsCollector.getTotal(),
             secret: this.secret
         };
     }
@@ -113,7 +113,7 @@ export default class WatchParty extends EventEmitter {
             time: this.getTime(),
             speed: this.speed,
             playing: this.playing,
-            stats: this.stats.getTotal(),
+            stats: this.statsCollector.getTotal(),
         }
     }
 
@@ -143,8 +143,8 @@ export default class WatchParty extends EventEmitter {
     handleUpdate(message) {
         let event = WatchPartyEvent.fromJSON(message);
         if (event.getType() === 'stats') {
-            this.stats.update(Object.assign(new Stats(), event.getData()));
-            this.emit('stats', this, this.stats.getTotal());
+            this.statsCollector.update(Object.assign(new Stats(), event.getData()));
+            this.emit('stats', this, this.statsCollector.getTotal());
             return;
         }
 

@@ -19,7 +19,7 @@ export default class UpdateMessageHandler extends MessageHandler {
         }
         await this.server.watchPartyManager.saveParty(party);
 
-        return message.respond({id: party.id});
+        return message.respond(party.serializeStatus());
     }
 
     /**

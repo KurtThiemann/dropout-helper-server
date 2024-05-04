@@ -2,7 +2,7 @@ import Stats from "./Stats.js";
 import crypto from "node:crypto";
 
 export default class StatsCollector {
-    /** @type {Stats} */ total;
+    /** @type {?Stats} */ total = null;
     /** @type {Map<string, Stats>} */ stats = new Map();
 
     /**
@@ -33,6 +33,9 @@ export default class StatsCollector {
      * @returns {Stats}
      */
     getTotal() {
+        if (this.total === null) {
+            this.updateTotal();
+        }
         return this.total;
     }
 }
