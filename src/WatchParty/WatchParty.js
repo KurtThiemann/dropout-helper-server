@@ -8,6 +8,7 @@ export default class WatchParty extends EventEmitter {
     /** @type {string} */ secret;
     /** @type {string} */ id;
     /** @type {string} */ url;
+    /** @type {?string} */ title = null;
     /** @type {number} */ time = 0;
     /** @type {number} */ lastUpdate = Date.now();
     /** @type {number} */ speed = 1;
@@ -65,7 +66,7 @@ export default class WatchParty extends EventEmitter {
             return false;
         }
 
-        if (!/^(.*\.)?dropout\.tv$/.test(url.hostname)) {
+        if (url.protocol !== 'https:' || !/^(.*\.)?dropout\.tv$/.test(url.hostname)) {
             return false;
         }
 
@@ -74,6 +75,11 @@ export default class WatchParty extends EventEmitter {
         this.speed = obj.speed;
         this.playing = obj.playing;
         this.lastUpdate = Date.now();
+
+        if (typeof obj.title === 'string' && obj.title.trim().length > 0 && obj.title.length <= 256) {
+            this.title = obj.title;
+        }
+
         return true;
     }
 
@@ -89,12 +95,41 @@ export default class WatchParty extends EventEmitter {
     }
 
     /**
+     * @returns {string}
+     */
+    getTitle() {
+        let title = this.title;
+        if (title === null) {
+            title = this.getTitleFromUrl();
+        }
+
+        return title ?? 'Unnamed Watch Party';
+    }
+
+    /**
+     * @returns {?string}
+     */
+    getTitleFromUrl() {
+        let url;
+        try {
+            url = new URL(this.url);
+        } catch (e) {
+            return null;
+        }
+
+        let path = url.pathname.replace(/\/+$/, '');
+        let title = path.split('/').pop();
+        return title && title.length > 0 && title.length <= 256 ? title : null;
+    }
+
+    /**
      * @returns {Object}
      */
     serialize() {
         return {
             id: this.id,
             url: this.url,
+            title: this.getTitle(),
             time: this.time,
             speed: this.speed,
             playing: this.playing,
@@ -110,6 +145,7 @@ export default class WatchParty extends EventEmitter {
         return {
             id: this.id,
             url: this.url,
+            title: this.getTitle(),
             time: this.getTime(),
             speed: this.speed,
             playing: this.playing,
