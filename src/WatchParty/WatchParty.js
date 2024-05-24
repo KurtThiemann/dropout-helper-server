@@ -76,7 +76,7 @@ export default class WatchParty extends EventEmitter {
         this.playing = obj.playing;
         this.lastUpdate = Date.now();
 
-        if (typeof obj.title === 'string' && obj.title.trim().length > 0 && obj.title.length <= 256) {
+        if (typeof obj.title === 'string' && obj.title.trim().length > 0 && obj.title.length <= 512) {
             this.title = obj.title;
         }
 
@@ -119,7 +119,7 @@ export default class WatchParty extends EventEmitter {
 
         let path = url.pathname.replace(/\/+$/, '');
         let title = path.split('/').pop();
-        return title && title.length > 0 && title.length <= 256 ? title : null;
+        return title && title.length > 0 && title.length <= 512 ? title : null;
     }
 
     /**
