@@ -66,7 +66,7 @@ export default class WatchParty extends EventEmitter {
             return false;
         }
 
-        if (url.protocol !== 'https:' || !/^(.*\.)?dropout\.tv$/.test(url.hostname)) {
+        if (url.protocol !== 'https:' || !this.manager.config.validHosts.includes(url.hostname)) {
             return false;
         }
 

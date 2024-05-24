@@ -7,6 +7,7 @@ export default class Config {
     /** @type {?string} */ certFile = null;
     /** @type {number} */ port = 3000;
     /** @type {?string} */ socket = null;
+    /** @type {string[]} */ validHosts = [];
 
     /**
      * @returns {Promise<Config>}

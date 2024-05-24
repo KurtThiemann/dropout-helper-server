@@ -3,5 +3,9 @@
   "port": 3000,
   "keyFile": null,
   "certFile": null,
-  "socket": null
+  "socket": null,
+  "validHosts": [
+    "www.dropout.tv",
+    "dropout.tv"
+  ]
 }
